@@ -10,7 +10,7 @@ public class DisplayExceptions {
         }
     }
 
-    private static void printExceptionLikeJVM(Throwable t) {
+    public static void printExceptionLikeJVM(Throwable t) {
         System.err.println("Exception in thread \""
                 + Thread.currentThread().getName() + "\" " + t);
         for (StackTraceElement element : t.getStackTrace()) {

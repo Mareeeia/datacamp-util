@@ -34,7 +34,7 @@ class CalculatorTest {
     }
 
     @Test
-    void testAddition() {
+    void testAddition_addsCorrectly() {
         when(dependency.calculate(2, 3)).thenReturn(5);
 
         int result = calculator.add(2, 3);
@@ -44,12 +44,19 @@ class CalculatorTest {
     }
 
     @Test
-    void testAdditionFailure() {
+    void testAddition_addsIncorrectly() {
         when(dependency.calculate(2, 3)).thenReturn(6); // Wrong mock behavior
 
         int result = calculator.add(2, 3);
 
         assertNotEquals(5, result);
+    }
+
+    @Test
+    void testAddition_throwsException() {
+        when(dependency.calculate(2, 3)).thenThrow(new RuntimeException("Dependency failed"));
+
+        calculator.add(2, 3);
     }
 }
 

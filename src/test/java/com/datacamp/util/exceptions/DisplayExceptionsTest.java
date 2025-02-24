@@ -14,7 +14,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class DisplayExceptionsTest {
+public class DisplayExceptionsTest {
 
     public static final String THREAD_NAME = "thread";
 
