@@ -1,64 +1,107 @@
 package com.datacamp.util.testing;
 
-import org.junit.platform.engine.discovery.DiscoverySelectors;
+import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.engine.support.descriptor.ClassSource;
 import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
+import org.junit.platform.launcher.TestExecutionListener;
+import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 import org.junit.platform.launcher.listeners.TestExecutionSummary;
 
-import java.io.PrintWriter;
-import java.time.Duration;
+import java.util.HashSet;
+import java.util.Set;
+
+import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 
 public class CustomJUnitTestLauncher {
 
-    public static void launchTestsAndPrint(Class<?> clazz) {
+    public static final String ANSI_RESET = "\u001B[0m";
+    public static final String ANSI_RED = "\u001B[31m";
+    public static final String ANSI_GREEN = "\u001B[32m";
+    public static final String ANSI_YELLOW = "\u001B[33m";
+
+    public static void launchTestsAndPrint(Class<?> testClass) {
         LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
-                .selectors(DiscoverySelectors.selectClass(clazz))
+                .selectors(selectClass(testClass))
                 .build();
 
         Launcher launcher = LauncherFactory.create();
-        SummaryGeneratingListener listener = new SummaryGeneratingListener();
 
-        launcher.execute(request, listener);
+        MavenStyleTestExecutionListener customListener = new MavenStyleTestExecutionListener(ClassSource.from(testClass));
 
-        TestExecutionSummary summary = listener.getSummary();
+        SummaryGeneratingListener summaryListener = new SummaryGeneratingListener();
 
-        customPrintSummary(summary, new PrintWriter(System.out));
+        launcher.registerTestExecutionListeners(customListener, summaryListener);
 
-        if (!summary.getFailures().isEmpty()) {
-            summary.getFailures().forEach(failure ->
-                sneakyThrow(failure.getException())
-            );
+        launcher.execute(request);
+
+        TestExecutionSummary summary = summaryListener.getSummary();
+
+        long testsFoundCount = summary.getTestsFoundCount();
+        long testsSkipped = summary.getTestsSkippedCount();
+        long testsAborted = summary.getTestsAbortedCount();
+        long testsFailed = summary.getTestsFailedCount();
+        long testsSucceeded = summary.getTestsSucceededCount();
+
+        String color = (testsFailed > 0) ? ANSI_RED : ANSI_GREEN;
+
+        System.out.println("Results:");
+        System.out.printf("%sTests run: %d, Failures: %d, Errors: 0, Skipped: %d%s%n",
+                color, testsFoundCount, testsFailed, testsSkipped, ANSI_RESET);
+
+        if (testsFailed > 0) {
+            System.out.println(ANSI_RED + "Some tests FAILED." + ANSI_RESET);
+        } else {
+            System.out.println(ANSI_GREEN + "All tests passed!" + ANSI_RESET);
         }
     }
 
-    private static void customPrintSummary(TestExecutionSummary summary, PrintWriter writer) {
-        writer.printf("%nTest run finished after %d ms%n"
+    static class MavenStyleTestExecutionListener implements TestExecutionListener {
+        private final Set<String> runningTestClasses = new HashSet<>();
+        private final ClassSource classSource;
 
-                        + "[%10d tests found           ]%n"
-                        + "[%10d tests skipped         ]%n"
-                        + "[%10d tests started         ]%n"
-                        + "[%10d tests aborted         ]%n"
-                        + "[%10d tests successful      ]%n"
-                        + "[%10d tests failed          ]%n"
-                        + "%n",
+        public MavenStyleTestExecutionListener(ClassSource classSource) {
+            this.classSource = classSource;
+        }
 
-                Duration.ofNanos(summary.getTimeStarted() - summary.getTimeFinished()).toMillis(),
+        @Override
+        public void executionStarted(TestIdentifier testIdentifier) {
+            if (testIdentifier.isContainer()) {
+                String className = classSource.getClassName();
+                if (!runningTestClasses.contains(className)) {
+                    System.out.println("Running " + className);
+                    runningTestClasses.add(className);
+                }
+            } else if (testIdentifier.isTest()) {
+                System.out.println("  -> " + testIdentifier.getDisplayName() + " STARTED");
+            }
+        }
 
-                summary.getTestsFoundCount(),
-                summary.getTestsSkippedCount(),
-                summary.getTestsStartedCount(),
-                summary.getTestsAbortedCount(),
-                summary.getTestsSucceededCount(),
-                summary.getTestsFailedCount()
-        );
-
-        writer.flush();
-    }
-
-    public static <T extends Throwable> void sneakyThrow(Throwable t) throws T {
-        throw (T) t; // This forces the compiler to ignore checked exceptions
+        @Override
+        public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
+            if (testIdentifier.isTest()) {
+                switch (testExecutionResult.getStatus()) {
+                    case SUCCESSFUL:
+                        System.out.println("  -> " + ANSI_GREEN + testIdentifier.getDisplayName() + " PASSED" + ANSI_RESET);
+                        break;
+                    case FAILED:
+                        System.out.println("  -> " + ANSI_RED + testIdentifier.getDisplayName() + " FAILED" + ANSI_RESET);
+                        Throwable t = testExecutionResult.getThrowable().orElse(null);
+                        if (t != null) {
+                            System.out.println("     " + t.getClass().getName() + ": " + t.getMessage());
+                        }
+                        break;
+                    case ABORTED:
+                        // Typically from assumptions, or @Disabled in older versions, or dynamic tests
+                        // In Surefire, "skipped" might be the terminology
+                        System.out.println("  -> " + ANSI_YELLOW + testIdentifier.getDisplayName() + " SKIPPED/ABORTED" + ANSI_RESET);
+                        break;
+                }
+            }
+        }
     }
 }
+
