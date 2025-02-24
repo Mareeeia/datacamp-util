@@ -51,14 +51,14 @@ public class CustomJUnitTestLauncher {
                 .count();
         testsFailed -= testsErrored;
 
-        String color = (testsFailed > 0) ? ANSI_RED : ANSI_GREEN;
+        String color = (testsFailed + testsErrored > 0) ? ANSI_RED : ANSI_GREEN;
 
         System.out.println("Results:");
         System.out.printf("%sTests run: %d, Failures: %d, Errors: %d, Skipped: %d%s%n",
                 color, testsFoundCount, testsFailed, testsErrored, testsSkipped, ANSI_RESET);
 
-        if (testsFailed > 0) {
-            System.out.println(ANSI_RED + "Some tests FAILED." + ANSI_RESET);
+        if (testsFailed + testsErrored > 0) {
+            System.out.println(ANSI_RED + "There are test failures." + ANSI_RESET);
         } else {
             System.out.println(ANSI_GREEN + "All tests passed!" + ANSI_RESET);
         }
