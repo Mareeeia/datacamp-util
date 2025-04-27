@@ -5,45 +5,70 @@ import org.junit.platform.engine.support.descriptor.ClassSource;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
 
-import java.util.Set;
+import java.text.DecimalFormat;
+import java.util.HashMap;
+import java.util.Map;
 
-class MavenStyleTestExecutionListener implements TestExecutionListener {
+/**
+ * Prints test–by–test output that looks like Maven Surefire.
+ * <p>
+ * Sample lines:
+ * Running com.acme.FooTest
+ * barShouldDoBaz  Time elapsed 0.003 s  <<< FAILURE!
+ * java.lang.AssertionError: expected:<1> but was:<0>
+ * at ...FooTest.java:42
+ */
+public final class MavenStyleTestExecutionListener implements TestExecutionListener {
 
-    private final Set<String> runningTestClasses;
-    private final ClassSource classSource;
+    private static final DecimalFormat TIME_FMT = new DecimalFormat("0.000");
 
-    public MavenStyleTestExecutionListener(ClassSource classSource) {
-        this.classSource = classSource;
-        this.runningTestClasses = new java.util.HashSet<>();
-    }
+    /**
+     * nanoTime when each test started
+     */
+    private final Map<TestIdentifier, Long> started = new HashMap<>();
+
+    /**
+     * track whether we have already printed the “Running …” line for this container
+     */
+    private boolean printedRunning = false;
 
     @Override
-    public void executionStarted(TestIdentifier testIdentifier) {
-        if (testIdentifier.isContainer()) {
-            String className = classSource.getClassName();
-            if (!runningTestClasses.contains(className)) {
-                System.out.println("Running " + className);
-                runningTestClasses.add(className);
+    public void executionStarted(TestIdentifier id) {
+        // Class header
+        if (id.isContainer() && id.getSource().filter(ClassSource.class::isInstance).isPresent()) {
+            ClassSource cs = (ClassSource) id.getSource().get();
+            if (!printedRunning) {
+                System.out.println("Running " + cs.getClassName());
+                printedRunning = true;
             }
-        } else if (testIdentifier.isTest()) {
-            System.out.println("  -> " + testIdentifier.getDisplayName() + " STARTED");
+        }
+
+        if (id.isTest()) {
+            started.put(id, System.nanoTime());
         }
     }
 
     @Override
-    public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult testExecutionResult) {
-        if (testIdentifier.isTest()) {
-            switch (testExecutionResult.getStatus()) {
-                case SUCCESSFUL:
-                    System.out.println("  -> " + testIdentifier.getDisplayName() + " PASSED");
-                    break;
-                case FAILED:
-                    System.out.println("  -> " + testIdentifier.getDisplayName() + " FAILED");
-                    break;
-                case ABORTED:
-                    System.out.println("  -> " + testIdentifier.getDisplayName() + " SKIPPED/ABORTED");
-                    break;
-            }
+    public void executionFinished(TestIdentifier id, TestExecutionResult result) {
+        if (!id.isTest()) return;
+
+        double elapsed = nanosToSeconds(started.get(id));
+        String testName = id.getDisplayName();
+        String tail = "";                            // SUCCESS path
+
+        if (result.getStatus() != TestExecutionResult.Status.SUCCESSFUL) {
+            tail = result.getStatus() == TestExecutionResult.Status.FAILED
+                    ? "  <<< FAILURE!"
+                    : "  <<< ERROR!";
         }
+
+        System.out.printf("%s  Time elapsed %s s%s%n",
+                testName, TIME_FMT.format(elapsed), tail);
+
+        result.getThrowable().ifPresent(t -> t.printStackTrace(System.out));
+    }
+
+    private static double nanosToSeconds(Long start) {
+        return start == null ? 0D : (System.nanoTime() - start) / 1_000_000_000D;
     }
 }

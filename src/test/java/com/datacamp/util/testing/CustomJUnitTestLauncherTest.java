@@ -38,6 +38,7 @@ class CustomJUnitTestLauncherTest {
 
         assertThat(actual, containsString(HEADER));
         assertThat(actual, containsString("Tests run: 1, Failures: 1, Errors: 0, Skipped: 0"));
+        assertThat(actual, containsString("ClassWithFailedTests.testMethod:86 expected: <true> but was: <false>"));
     }
 
     @Test
@@ -46,6 +47,7 @@ class CustomJUnitTestLauncherTest {
 
         assertThat(actual, containsString(HEADER));
         assertThat(actual, containsString("Tests run: 1, Failures: 0, Errors: 1, Skipped: 0"));
+        assertThat(actual, containsString("ClassThrowsExceptionTest.testMethod:93 Test exception"));
     }
 
     private String getCapturedOutput(Runnable runnable) {
