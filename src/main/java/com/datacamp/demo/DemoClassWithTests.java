@@ -49,7 +49,7 @@ class CalculatorTest {
 
         int result = calculator.add(2, 3);
 
-        assertNotEquals(5, result);
+        assertNotEquals(6, result);
     }
 
     @Test

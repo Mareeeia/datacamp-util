@@ -12,10 +12,6 @@ import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass
 
 public class CustomJUnitTestLauncher {
 
-    public static final String ANSI_RESET = "\u001B[0m";
-    public static final String ANSI_RED = "\u001B[31m";
-    public static final String ANSI_GREEN = "\u001B[32m";
-
     public static void launchTestsAndPrint(Class<?> testClass) {
         System.out.println("-------------------------------------------------------");
         System.out.println(" T E S T S");
@@ -51,16 +47,14 @@ public class CustomJUnitTestLauncher {
                 .count();
         testsFailed -= testsErrored;
 
-        String color = (testsFailed + testsErrored > 0) ? ANSI_RED : ANSI_GREEN;
-
         System.out.println("Results:");
-        System.out.printf("%sTests run: %d, Failures: %d, Errors: %d, Skipped: %d%s%n",
-                color, testsFoundCount, testsFailed, testsErrored, testsSkipped, ANSI_RESET);
+        System.out.printf("Tests run: %d, Failures: %d, Errors: %d, Skipped: %d%n",
+                testsFoundCount, testsFailed, testsErrored, testsSkipped);
 
         if (testsFailed + testsErrored > 0) {
-            System.out.println(ANSI_RED + "There are test failures." + ANSI_RESET);
+            System.out.println("There are test failures.");
         } else {
-            System.out.println(ANSI_GREEN + "All tests passed!" + ANSI_RESET);
+            System.out.println("All tests passed!");
         }
     }
 }
