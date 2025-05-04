@@ -1,20 +1,22 @@
 package com.datacamp.util.testing;
 
+import static com.datacamp.util.testing.CustomJUnitTestLauncher.launchTestsAndPrint;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
-import static com.datacamp.util.testing.CustomJUnitTestLauncher.launchTestsAndPrint;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 class CustomJUnitTestLauncherTest {
 
-    private static final String HEADER = "-------------------------------------------------------\n" +
-            " T E S T S\n" +
-            "-------------------------------------------------------";
+    private static final String HEADER =
+            "-------------------------------------------------------\n"
+                    + " T E S T S\n"
+                    + "-------------------------------------------------------";
 
     @Test
     void launchTestsAndPrint_printsOutput_whenTestsPresent() {
@@ -38,7 +40,10 @@ class CustomJUnitTestLauncherTest {
 
         assertThat(actual, containsString(HEADER));
         assertThat(actual, containsString("Tests run: 1, Failures: 1, Errors: 0, Skipped: 0"));
-        assertThat(actual, containsString("ClassWithFailedTests.testMethod:86 expected: <true> but was: <false>"));
+        assertThat(
+                actual,
+                containsString(
+                        "ClassWithFailedTests.testMethod:86 expected: <true> but was: <false>"));
     }
 
     @Test
@@ -80,6 +85,7 @@ class ClassWithTests {
     }
 }
 
+// Expected to fail
 class ClassWithFailedTests {
     @Test
     void testMethod() {
@@ -87,6 +93,7 @@ class ClassWithFailedTests {
     }
 }
 
+// Expected to fail
 class ClassThrowsExceptionTest {
     @Test
     void testMethod() {

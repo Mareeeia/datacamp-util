@@ -1,12 +1,12 @@
 package com.datacamp.util.api.banking;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.Arrays;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class EuropeanCentralBankTest {
 
@@ -15,7 +15,7 @@ class EuropeanCentralBankTest {
     void getRateEURto_returnsRates(String currency) throws Exception {
         var europeanCentralBank = new EuropeanCentralBank();
 
-        var rate = europeanCentralBank.getRateEURto(currency);
+        var rate = europeanCentralBank.getRateEuroTo(currency);
 
         assertTrue(rate > 0);
     }
