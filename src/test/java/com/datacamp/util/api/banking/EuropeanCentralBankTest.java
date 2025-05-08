@@ -13,7 +13,7 @@ class EuropeanCentralBankTest {
     @ParameterizedTest
     @MethodSource("enumToString")
     void getRateEURto_returnsRates(String currency) {
-        var europeanCentralBank = new EuropeanCentralBank();
+        var europeanCentralBank = new EuropeanCentralBankServer();
 
         var rate = europeanCentralBank.getRateEuroTo(currency);
 

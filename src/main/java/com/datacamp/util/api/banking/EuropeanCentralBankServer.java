@@ -12,7 +12,7 @@ import java.util.Map;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 /** Fetches ECB daily euro reference rates. Rates update 16:00 CET every working day. */
-public class EuropeanCentralBank {
+public class EuropeanCentralBankServer {
 
     private static final String ECB_URL =
             "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml";
